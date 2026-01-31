@@ -36,6 +36,7 @@ public class SessionAttributesService
         }
 
         String customerId = session.get("customerId").toString();
+        String sessionCorrelation = session.get("session_correlationId").toString();
         RestTemplate restTemplate = new RestTemplate();
         String domain = ConfigReader.getHost("OpenIDM_host", "DomainHosts");
         String basePath = ConfigReader.getURL("GetSessionInformation", "OpenIDM");
@@ -79,6 +80,7 @@ public class SessionAttributesService
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("isSessionValid", true);
+            result.put("sessionCorrelationId", sessionCorrelation);
             result.put("customerId", session.get("customerId"));
             result.put("tokenId", session.get("dspSession"));
             result.put("first_name", first_name);
