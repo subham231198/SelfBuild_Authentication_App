@@ -12,10 +12,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 
 @Service
 public class SessionAttributesService
@@ -37,6 +35,13 @@ public class SessionAttributesService
 
         String customerId = session.get("customerId").toString();
         String sessionCorrelation = session.get("session_correlationId").toString();
+        Instant expiry = (Instant) session.get("expiry");
+
+        if(Instant.now().isAfter(expiry))
+        {
+            sessionManager.getList().removeIf(s -> tokenId.equals(s.get("dspSession")));
+            return Map.of("valid", false);
+        }
         RestTemplate restTemplate = new RestTemplate();
         String domain = ConfigReader.getHost("OpenIDM_host", "DomainHosts");
         String basePath = ConfigReader.getURL("GetSessionInformation", "OpenIDM");

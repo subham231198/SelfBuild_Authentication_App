@@ -43,4 +43,25 @@ public class ConfigReader
             throw new RuntimeException(e);
         }
     }
+
+    public static String getAuthCredentials(String key)
+    {
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream("src/main/resources/ServiceProperties/AuthCredentials.properties"));
+            String value = properties.getProperty(key);
+            if(value != null)
+            {
+                return value;
+            }
+            else
+            {
+                throw new RuntimeException("Key not found in properties file: " + key);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }

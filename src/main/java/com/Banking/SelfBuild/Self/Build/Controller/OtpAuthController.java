@@ -7,6 +7,7 @@ import com.Banking.SelfBuild.Self.Build.Service.PasswordAuthService;
 import com.Banking.SelfBuild.Self.Build.Utility.ConfigReader;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,14 +58,33 @@ public class OtpAuthController
     }
 
     @PostMapping(value = "/Identity/indBank/auth")
-    public ResponseEntity<Map<String, Object>>  otpAuthController(@RequestHeader(name = "x-channel") String channel,
-                                                                  @RequestHeader(name = "x-group-member") String groupMember,
-                                                                  @RequestHeader(name = "x-correlationId") String correlationId,
-                                                                  @RequestHeader(name = "x-country") String country,
+    public ResponseEntity<Map<String, Object>>  otpAuthController(@RequestHeader(name = "x-channel") @NonNull String channel,
+                                                                  @RequestHeader(name = "x-group-member") @NonNull String groupMember,
+                                                                  @RequestHeader(name = "x-correlationId") @NonNull String correlationId,
+                                                                  @RequestHeader(name = "x-country") @NonNull String country,
+                                                                  @RequestHeader(name = "Authorization") @NonNull String authorization,
                                                                   @RequestParam(name = "_service") String service,
-                                                                  @RequestBody OtpAuthRequest otpAuthRequest,
+                                                                  @RequestBody @NonNull OtpAuthRequest otpAuthRequest,
                                                                   HttpServletResponse response)
     {
+        if(authorization.isEmpty())
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Authorization header cannot be null or empty!");
+        }
+        if (!authorization.startsWith("Basic "))
+        {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid Authorization header value provided!");
+        }
+        String base64Credentials = authorization.substring("Basic ".length()).trim();
+        byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Credentials);
+        String credentials = new String(decodedBytes);
+        String[] values = credentials.split(":", 2);
+        String username = values[0];
+        String password = values[1];
+        if(!username.equals(ConfigReader.getAuthCredentials("clientId")) || !password.equals(ConfigReader.getAuthCredentials("clientSecret")))
+        {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password in Authorization header!");
+        }
         if(channel.isEmpty())
         {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "x-channel header cannot be null or empty!");
