@@ -1,6 +1,7 @@
 package com.Banking.SelfBuild.Self.Build.Service;
 
 import com.Banking.SelfBuild.Self.Build.POJO.SessionManager;
+import com.Banking.SelfBuild.Self.Build.Repository.UsernameAuthRepo;
 import com.Banking.SelfBuild.Self.Build.Utility.ConfigReader;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -21,6 +22,10 @@ public class SessionAttributesService
     @Autowired
     private SessionManager sessionManager;
 
+    @Autowired
+    private UsernameAuthService usernameAuthService;
+
+
     public Map<String, Object> getSessionInfo(String tokenId)
     {
         Map<String, Object> session = sessionManager.getList().stream()
@@ -36,6 +41,12 @@ public class SessionAttributesService
         String customerId = session.get("customerId").toString();
         String sessionCorrelation = session.get("session_correlationId").toString();
         Instant expiry = (Instant) session.get("expiry");
+        String customerAuthLevel = "";
+        Map<String, Object> userDetails = usernameAuthService.getProfileAuthDetails(customerId);
+        if(Boolean.TRUE.equals(userDetails != null))
+        {
+           customerAuthLevel = userDetails.get("authLevel").toString();
+        }
 
         if(Instant.now().isAfter(expiry))
         {
@@ -95,6 +106,7 @@ public class SessionAttributesService
             result.put("accountType", accountType);
             result.put("issuedAt", session.get("issuedAt"));
             result.put("expiry", session.get("expiry"));
+            result.put("authLevel", customerAuthLevel);
             result.put("alg", alg);
             return result;
         }
