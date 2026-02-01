@@ -24,7 +24,7 @@ public class OauthAuthorizeController {
     private OAuthAuthorizationService authorizationService;
 
 
-    @GetMapping("/authorize")
+    @GetMapping(value = "/authorize", consumes = "application/x-www-form-urlencoded", produces = "application/json")
     public ResponseEntity<Map<String, Object>> authorize(
             @RequestParam("client_id") String clientId,
             @RequestParam("grant_type") String grantType,
