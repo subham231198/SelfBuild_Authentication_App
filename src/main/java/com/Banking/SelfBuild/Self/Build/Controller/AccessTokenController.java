@@ -103,6 +103,6 @@ public class AccessTokenController {
         } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Access Denied!");
         }
-        return new ResponseEntity<>(oauthAccessTokenService.getSessionFromAccessToken(authCode), HttpStatus.OK);
+        return oauthAccessTokenService.getSessionFromAccessToken(authCode);
     }
 }

@@ -33,10 +33,7 @@ public class OauthAccessTokenService {
 
         List<Map<String, Object>> authStore = authCodeStorage == null ? null : authCodeStorage.getAuthCode_storage();
         if (authStore == null || authStore.isEmpty()) {
-            Map<String, Object> error = new LinkedHashMap<>();
-            error.put("error", "the provided token is either invalid, expired or revoked");
-            error.put("grant_type", "invalid_grant");
-            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid authorization code or client ID.");
         }
 
         Optional<Map<String, Object>> optEntry = authStore.stream()
@@ -116,6 +113,66 @@ public class OauthAccessTokenService {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    public ResponseEntity<Map<String, Object>> getSessionFromAccessToken(String accessToken) {
+        if (accessToken == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing access token.");
+        }
+
+        List<Map<String, Object>> accessStore = accessTokenStorage == null ? null : accessTokenStorage.getAccessToken_storage();
+        if (accessStore == null || accessStore.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid access token.");
+        }
+
+        Optional<Map<String, Object>> optEntry = accessStore.stream()
+                .filter(entry -> accessToken.equals(String.valueOf(entry.get("access_token"))))
+                .findFirst();
+
+        if (!optEntry.isPresent()) {
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", "the provided token is either invalid, expired or revoked");
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+
+        Map<String, Object> tokenEntry = optEntry.get();
+
+        Object expiryObj = tokenEntry.get("expiry");
+        Instant expiry;
+        try {
+            if (expiryObj instanceof Instant) {
+                expiry = (Instant) expiryObj;
+            } else if (expiryObj instanceof String) {
+                expiry = Instant.parse((String) expiryObj);
+            } else {
+                // unknown expiry representation -> treat as invalid
+                removeFromListSafely(accessStore, tokenEntry);
+                Map<String, Object> error = new LinkedHashMap<>();
+                error.put("error", "the provided token is either invalid, expired or revoked");
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception ex) {
+            removeFromListSafely(accessStore, tokenEntry);
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", "the provided token is either invalid, expired or revoked");
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+
+        if (Instant.now().isAfter(expiry)) {
+            removeFromListSafely(accessStore, tokenEntry);
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", "the provided token is either invalid, expired or revoked");
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+
+        String customerId = String.valueOf(tokenEntry.get("customerId"));
+        String csrfToken = String.valueOf(tokenEntry.get("csrfToken"));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("customerId", customerId);
+        response.put("tokenId", csrfToken);
+        response.put("valid", true);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     private void removeFromListSafely(List<Map<String, Object>> list, Map<String, Object> entry) {
         if (list == null) return;
         synchronized (list) {
@@ -129,51 +186,4 @@ public class OauthAccessTokenService {
             list.add(entry);
         }
     }
-
-
-    public Map<String, Object> getSessionFromAccessToken(String accessToken) {
-        List<Map<String, Object>> accessStore = accessTokenStorage == null ? null : accessTokenStorage.getAccessToken_storage();
-        if (accessStore == null || accessStore.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access Denied!");
-        }
-
-        Optional<Map<String, Object>> optEntry = accessStore.stream()
-                .filter(entry -> accessToken.equals(String.valueOf(entry.get("access_token"))))
-                .findFirst();
-
-        if (!optEntry.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access Denied!");
-        }
-
-        Map<String, Object> tokenEntry = optEntry.get();
-
-        Object expiryObj = tokenEntry.get("expiry");
-        Instant expiry;
-        try {
-            if (expiryObj instanceof Instant) {
-                expiry = (Instant) expiryObj;
-            } else if (expiryObj instanceof String) {
-                expiry = Instant.parse((String) expiryObj);
-            } else {
-                // unknown expiry representation -> remove and deny
-                removeFromListSafely(accessStore, tokenEntry);
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access Denied!");
-            }
-        } catch (Exception ex) {
-            removeFromListSafely(accessStore, tokenEntry);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access Denied!");
-        }
-
-        if (Instant.now().isAfter(expiry)) {
-            removeFromListSafely(accessStore, tokenEntry);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access Denied!");
-        }
-
-        String dspSession = String.valueOf(tokenEntry.get("csrfToken"));
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("tokenId", dspSession);
-        response.put("role", "./dsp");
-        return response;
-    }
-
 }
