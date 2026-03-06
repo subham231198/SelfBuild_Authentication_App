@@ -2,6 +2,8 @@ package com.Banking.SelfBuild.Self.Build.Controller;
 
 import com.Banking.SelfBuild.Self.Build.POJO.SessionAttributes;
 import com.Banking.SelfBuild.Self.Build.Service.SessionAttributesService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,11 +14,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/Identity")
+@CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
 public class SessionAttributesController
 {
     @Autowired
     private SessionAttributesService sessionAttributesService;
 
+    private static final Logger logger = LogManager.getLogger(SessionAttributesController.class);
     @PostMapping(value = "/indBank/v1/dsp/sessions")
     private ResponseEntity<Map<String, Object>> getSessionAttribute(@RequestParam(value = "_action") String action, @RequestHeader(name = "x-channel")  String channel, @RequestHeader(name = "x-group-member") String groupMember, @RequestBody SessionAttributes sessionAttributes)
     {
@@ -40,6 +44,7 @@ public class SessionAttributesController
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid _action parameter value provided!");
         }
+        logger.info(sessionAttributes.toString());
         Map<String, Object> result = sessionAttributesService.getSessionInfo(sessionAttributes.getTokenId());
         if(result!=null)
         {

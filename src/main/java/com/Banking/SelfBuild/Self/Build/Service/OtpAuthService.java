@@ -250,7 +250,7 @@ public class OtpAuthService
         map.put("customerId", customerId);
         map.put("dspSession", dspSession);
         map.put("issuedAt", Instant.now());
-        map.put("expiry", Instant.now().plusSeconds(300));
+        map.put("expiry", Instant.now().plusSeconds(600));
         map.put("session_correlationId", correlationId);
 
         sessionManager.getList().add(map);

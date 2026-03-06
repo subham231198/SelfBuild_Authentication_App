@@ -93,6 +93,7 @@ public class SessionAttributesService
             String email = payload.optString("email");
             String phone = payload.optString("phone");
             String accountType = payload.optString("accountType");
+            String city = payload.optString("city");
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("isSessionValid", true);
@@ -103,6 +104,7 @@ public class SessionAttributesService
             result.put("last_name", last_name);
             result.put("email", email);
             result.put("phone", phone);
+            result.put("city", city);
             result.put("accountType", accountType);
             result.put("issuedAt", session.get("issuedAt"));
             result.put("expiry", session.get("expiry"));

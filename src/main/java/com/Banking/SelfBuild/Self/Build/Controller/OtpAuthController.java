@@ -123,6 +123,7 @@ public class OtpAuthController
         String value2 = otpAuthRequest.getCallbacksValue_accessKeyValue().getValue();
         if(service.equals("OtpAuthService"))
         {
+            logger.info("Incoming OTPAuth Request: {}", otpAuthRequest);
             String result = otpAuthService.validate_OTP(value1, value2, correlationId);
             if(result != null)
             {
@@ -138,6 +139,7 @@ public class OtpAuthController
                 Map<String, Object> token_details = new LinkedHashMap<>();
                 token_details.put("tokenId", result);
                 token_details.put("role", "./dsp");
+                logger.info("DSP Session = ", result);
                 return new ResponseEntity<>(token_details, HttpStatus.OK);
             }
             else
@@ -147,6 +149,7 @@ public class OtpAuthController
         }
         else if(service.equals("PasswordAuthService"))
         {
+            logger.info("Incoming PasswordAuth Request: {}", otpAuthRequest);
             String result = passwordAuthService.authenticate(value1, value2, correlationId);
             if(!result.isEmpty() && result.contains("sf_.*"))
             {

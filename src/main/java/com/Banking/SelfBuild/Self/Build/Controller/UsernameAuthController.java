@@ -71,6 +71,7 @@ public class UsernameAuthController
         {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid Authorization header value provided!");
         }
+        logger.info("Incoming UsernameAuth Request: {}", usernameAuthRequest);
         Map<String, Object> result = usernameAuthService.getProfileAuthDetails(usernameAuthRequest.getCallbacksValue().getValue());
 
         return new ResponseEntity<>(result, HttpStatus.OK);

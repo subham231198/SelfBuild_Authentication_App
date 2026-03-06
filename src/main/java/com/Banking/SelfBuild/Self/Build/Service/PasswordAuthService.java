@@ -95,6 +95,7 @@ public class PasswordAuthService
                 usernameAuthEntity.get().setLast_login_timeStamp(Instant.now().toString());
                 usernameAuthEntity.get().setInvalid_login_attempt_counter(0);
                 sessionManager.getList().add(map);
+                usernameAuthRepo.save(usernameAuthEntity.get());
                 return dspSession;
             }
             else
