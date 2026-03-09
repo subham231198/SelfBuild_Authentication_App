@@ -10,6 +10,7 @@ import com.Banking.SelfBuild.Self.Build.Repository.UsernameAuthRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,11 +40,12 @@ public class PasswordAuthService
 
     public Boolean validatePassword(String customerId, String password)
     {
-        String encodedPassword = Base64.getEncoder().encodeToString(password.getBytes());
-        Optional<PasswordAuthEntity> customer = passwordAuthRepo.findByCustomerIdAndPassword(customerId, encodedPassword);
+        Optional<PasswordAuthEntity> customer = passwordAuthRepo.findByCustomerId(customerId);
         if(customer.isPresent())
         {
-            return true;
+            String storedHash = customer.get().getPassword();
+            logger.info(storedHash);
+            return BCrypt.checkpw(password, storedHash);
         }
         return false;
     }

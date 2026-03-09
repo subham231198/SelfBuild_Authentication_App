@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface PasswordAuthRepo extends JpaRepository<PasswordAuthEntity, Long>
 {
     Optional<PasswordAuthEntity> findByCustomerIdAndPassword(String customerId, String password);
+    Optional<PasswordAuthEntity> findByCustomerId(String customerId);
 }
