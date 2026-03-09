@@ -77,13 +77,11 @@ public class OtpAuthService
             }
             else if(channel.equalsIgnoreCase("MOBILE"))
             {
-                otpEntity.setExpiryTimeStamp(Instant.now().plusSeconds(5).toString());
+                otpEntity.setExpiryTimeStamp(Instant.now().plusSeconds(10).toString());
             }
-            else
-            {
+            else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid channel value!");
             }
-            otpEntity.setExpiryTimeStamp(Instant.now().plusSeconds(10).toString());
             otpEntity.setOtpUsed(false);
             otpAuthRepo.save(otpEntity);
 
